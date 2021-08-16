@@ -1,0 +1,158 @@
+---
+title: "activity"
+author: "Jake Eisaguirre"
+date: "8/16/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(here)
+library(janitor)
+```
+## read in data and remove weird observations 
+```{r}
+
+lob_data <- read_csv(here("data", "Lobster_Abundance_All_Years_20210412.csv"), na = c("-99999", "")) %>% 
+  clean_names() %>% 
+  uncount(count)
+
+
+
+```
+
+## find counts and means sizes by site
+
+```{r}
+
+count_size <- lob_data %>%
+  
+  group_by(year, site) %>% 
+  
+  summarize(mean_carp_length_mm = mean(size_mm),
+            total_counts = n())
+
+ggplot(count_size, aes(x = year, y = total_counts)) +
+  geom_line() + 
+  aes(color = site)
+
+
+
+
+```
+```{r}
+
+legal_lob_size <- lob_data %>% 
+  
+  filter(year == 2020) %>% 
+  
+  mutate( legality = case_when(
+    size_mm < 79.76 ~"no",
+    size_mm >= 79.76 ~"yes")) %>% 
+  
+  group_by(site, legality) %>% 
+  
+  summarize(lob_count = n()/1000)
+
+  
+ggplot(legal_lob_size, aes(x = site, y = lob_count)) +
+  geom_col(position = "fill") +
+  aes(fill = legality)
+ 
+  
+  
+  
+  
+  
+
+
+
+  
+  
+
+```
+IV and carp have the greatest proportion of legal lobsters. I hypothesis the larger proportions of legal lobsters at IV and namples is due to a MPA 
+
+# random lob wrangling
+
+```{r}
+
+lobs <- lob_data %>%
+  filter(site %in% c("IVEE", "CARP", "NAPL"))
+
+unique(lobs)
+
+aug_lobs <- lob_data %>% 
+  filter(month == 8)
+
+AQ_lobs <- lob_data %>% 
+  filter(site == "AQUE" | size_mm > 70)
+
+no_nap <- lob_data %>% 
+  filter(!site == "NAPL")
+
+```
+
+## group by practice
+```{r}
+
+group_lobs <- lob_data %>% 
+  
+  group_by(site) %>%
+  
+  summarize(mean_lobs = mean(size_mm, na.rm = T), sd_lobs = sd(size_mm, na.rm = T))
+
+
+
+group_lobs_1 <- lob_data %>% 
+  
+  group_by(site, month) %>% 
+  
+  summarize(max_lob_length = max(size_mm, na.rm = T))
+  
+  
+
+
+```
+
+## mutate practice
+
+```{r}
+
+mutate_lobs <- lob_data %>% 
+  
+  mutate(size_cm = size_mm*10)
+
+low_case <- lob_data %>% 
+  
+  mutate(site = tolower(site))
+
+char <- lob_data %>% 
+  
+  mutate(area = as.character(area))
+
+```
+
+## case when practice
+
+```{r}
+
+size_bin <- lob_data %>% 
+  
+  mutate(size_bin = case_when(
+    
+  size_mm <= 70 ~"small",
+  size_mm > 70 ~"large"))
+
+
+MPA_added <- lob_data %>% 
+  
+  mutate(MPA_status = case_when(
+   
+     site %in% c("IVEE","NAPL") ~"MPA",
+     !site %in% c("IVEE", "NAPL")~"Non_MPA"
+  ))
+
+```
+
